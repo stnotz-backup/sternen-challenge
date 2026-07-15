@@ -78,6 +78,10 @@ body {
   transition: background 0.15s;
 }
 
+.task-card.mandatory {
+  background: #fff3e0;
+}
+
 .task-card.done {
   background: #f0fbf4;
 }

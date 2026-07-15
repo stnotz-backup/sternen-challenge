@@ -169,19 +169,12 @@ async function render() {
   renderTotalBar(computeDayTotalStars(currentRecord));
 }
 
-function renderTaskDay(container) {
-  const rec = currentRecord;
-  const mainStars = computeMainStars(rec);
-
-  let html = `<div class="today-stars-banner">${weekdayName(currentIso)}, ${formatDateHuman(currentIso)} — ${mainStars} / 9 ⭐ heute</div>`;
-
-  html += `<div class="section-title">Heutige Aufgaben</div>`;
-  for (const t of TASKS) {
-    const isAuto = !!t.auto;
-    const done = isAuto ? t.dependsOn.every((id) => rec.checked[id]) : !!rec.checked[t.id];
-    const photo = rec.photos[t.id];
-    html += `
-      <div class="task-card ${done ? "done" : ""} ${isAuto ? "auto" : ""}" data-task="${t.id}">
+function renderTaskCardHtml(t, rec) {
+  const isAuto = !!t.auto;
+  const done = isAuto ? t.dependsOn.every((id) => rec.checked[id]) : !!rec.checked[t.id];
+  const photo = rec.photos[t.id];
+  return `
+      <div class="task-card ${done ? "done" : ""} ${isAuto ? "auto" : ""} ${t.mandatory ? "mandatory" : ""}" data-task="${t.id}">
         <div class="task-check" data-role="check" data-task="${t.id}" ${isAuto ? "" : ""}>${done ? "✓" : ""}</div>
         <div class="task-body">
           <div class="task-label">${t.label}${t.mandatory ? " (Pflicht)" : ""}</div>
@@ -194,6 +187,18 @@ function renderTaskDay(container) {
             : `<button class="task-photo-btn" data-role="photo-add" data-task="${t.id}">📷</button>`}
         ` : ""}
       </div>`;
+}
+
+function renderTaskDay(container) {
+  const rec = currentRecord;
+  const mainStars = computeMainStars(rec);
+
+  let html = `<div class="today-stars-banner">${weekdayName(currentIso)}, ${formatDateHuman(currentIso)} — ${mainStars} / 9 ⭐ heute</div>`;
+
+  html += `<div class="section-title">Heutige Aufgaben</div>`;
+  for (const t of TASKS) {
+    if (t.id === "bonus_geholfen") continue; // wird weiter unten, hinter den Extra-Bonusaufgaben, gerendert
+    html += renderTaskCardHtml(t, rec);
   }
 
   html += `<div class="section-title">Bonus-Aufgaben (Extra)</div>`;
@@ -209,6 +214,8 @@ function renderTaskDay(container) {
         <div class="bonus-stars">${stars}</div>
       </div>`;
   }
+
+  html += renderTaskCardHtml(TASKS.find((t) => t.id === "bonus_geholfen"), rec);
 
   container.innerHTML = html;
   wireTaskEvents(container);
