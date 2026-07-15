@@ -68,9 +68,9 @@ function computeBonusStars(record) {
   return stars;
 }
 
-// Haupt- + Bonus-Sterne zusammen, gedeckelt auf das Tagesmaximum von 9.
+// Haupt- + Bonus-Sterne zusammen, maximal 14 (9 Hauptaufgaben + 3 + 2 Extra-Bonus).
 function computeDayTotalStars(record) {
-  return Math.min(computeMainStars(record) + computeBonusStars(record), 9);
+  return computeMainStars(record) + computeBonusStars(record);
 }
 
 function starsToCHF(stars) {
