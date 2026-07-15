@@ -68,6 +68,11 @@ function computeBonusStars(record) {
   return stars;
 }
 
+// Haupt- + Bonus-Sterne zusammen, gedeckelt auf das Tagesmaximum von 9.
+function computeDayTotalStars(record) {
+  return Math.min(computeMainStars(record) + computeBonusStars(record), 9);
+}
+
 function starsToCHF(stars) {
   return (stars * CHALLENGE.starValueCHF).toFixed(2);
 }
@@ -76,7 +81,7 @@ async function computeGrandTotal() {
   const days = await getAllDays();
   let stars = 0;
   for (const rec of days) {
-    stars += computeMainStars(rec) + computeBonusStars(rec);
+    stars += computeDayTotalStars(rec);
   }
   return stars;
 }
@@ -151,7 +156,7 @@ async function render() {
   }
 
   renderTaskDay(dayView);
-  renderTotalBar(computeMainStars(currentRecord) + computeBonusStars(currentRecord));
+  renderTotalBar(computeDayTotalStars(currentRecord));
 }
 
 function renderTaskDay(container) {
@@ -208,7 +213,7 @@ function wireTaskEvents(container) {
       currentRecord.checked[taskId] = !currentRecord.checked[taskId];
       await putDay(currentRecord);
       renderTaskDay(container);
-      renderTotalBar(computeMainStars(currentRecord) + computeBonusStars(currentRecord));
+      renderTotalBar(computeDayTotalStars(currentRecord));
     });
   });
 
@@ -232,12 +237,11 @@ function wireTaskEvents(container) {
 
   container.querySelectorAll('[data-role="photo-view"]').forEach((el) => {
     const taskId = el.dataset.task;
+    el.title = "Antippen zum Entfernen";
     el.addEventListener("click", async () => {
-      if (confirm("Foto entfernen?")) {
-        delete currentRecord.photos[taskId];
-        await putDay(currentRecord);
-        renderTaskDay(container);
-      }
+      delete currentRecord.photos[taskId];
+      await putDay(currentRecord);
+      renderTaskDay(container);
     });
   });
 
@@ -250,7 +254,7 @@ function wireTaskEvents(container) {
       currentRecord.bonus[taskId] = current === value ? value - 1 : value;
       await putDay(currentRecord);
       renderTaskDay(container);
-      renderTotalBar(computeMainStars(currentRecord) + computeBonusStars(currentRecord));
+      renderTotalBar(computeDayTotalStars(currentRecord));
     });
   });
 }
@@ -272,9 +276,7 @@ async function renderTotalBar(todayStars) {
 
 async function shareDay() {
   const rec = currentRecord;
-  const mainStars = computeMainStars(rec);
-  const bonusStars = computeBonusStars(rec);
-  const todayTotal = mainStars + bonusStars;
+  const todayTotal = computeDayTotalStars(rec);
   const grand = await computeGrandTotal();
 
   let lines = [];
@@ -310,12 +312,27 @@ async function shareDay() {
   if (navigator.share) {
     try {
       await navigator.share(shareData);
+      return;
     } catch (e) {
-      // Nutzer hat Teilen abgebrochen — kein Fehler
+      // Nutzer hat Teilen abgebrochen — kein Fehler, kein Fallback nötig
+      return;
     }
-  } else {
-    alert("Teilen wird auf diesem Gerät/Browser nicht unterstützt.\n\n" + text);
   }
+  showTextOverlay(text);
+}
+
+function showTextOverlay(text) {
+  const overlay = document.createElement("div");
+  overlay.className = "share-overlay";
+  overlay.innerHTML = `
+    <div class="share-card">
+      <div class="share-card-title">Tagesbericht (Teilen wird hier nicht unterstützt)</div>
+      <pre class="share-text"></pre>
+      <button class="share-close-btn" data-role="share-close">Schliessen</button>
+    </div>`;
+  overlay.querySelector(".share-text").textContent = text;
+  overlay.querySelector('[data-role="share-close"]').addEventListener("click", () => overlay.remove());
+  document.body.appendChild(overlay);
 }
 
 window.addEventListener("DOMContentLoaded", () => {
