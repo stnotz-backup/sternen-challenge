@@ -73,11 +73,6 @@ const TASKS = [
     stars: 1,
   },
   {
-    id: "bonus_geholfen",
-    label: "Bonus: ohne Aufforderung geholfen",
-    stars: 1,
-  },
-  {
     id: "alles_erledigt",
     label: "Alle Aufgaben vollständig erledigt",
     stars: 1,
@@ -86,7 +81,7 @@ const TASKS = [
   },
 ];
 
-// Extra-Bonusaufgaben — zählen zusätzlich zu den 9 Stern-Maximum der Hauptliste.
+// Extra-Bonusaufgaben — zählen zusätzlich zum Hauptaufgaben-Maximum, jeweils per Stern-Auswahl (kein Abhaken).
 const BONUS_TASKS = [
   {
     id: "spuelmaschine",
@@ -97,5 +92,10 @@ const BONUS_TASKS = [
     id: "waesche_einraeumen",
     label: "Saubere Wäsche in den Kleiderschrank verräumen",
     maxStars: 2,
+  },
+  {
+    id: "bonus_geholfen",
+    label: "Bonus: ohne Aufforderung geholfen",
+    maxStars: 1,
   },
 ];

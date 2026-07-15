@@ -189,33 +189,38 @@ function renderTaskCardHtml(t, rec) {
       </div>`;
 }
 
+const MAX_MAIN_STARS = TASKS.reduce((sum, t) => sum + t.stars, 0);
+
 function renderTaskDay(container) {
   const rec = currentRecord;
   const mainStars = computeMainStars(rec);
 
-  let html = `<div class="today-stars-banner">${weekdayName(currentIso)}, ${formatDateHuman(currentIso)} — ${mainStars} / 9 ⭐ heute</div>`;
+  let html = `<div class="today-stars-banner">${weekdayName(currentIso)}, ${formatDateHuman(currentIso)} — ${mainStars} / ${MAX_MAIN_STARS} ⭐ heute</div>`;
 
   html += `<div class="section-title">Heutige Aufgaben</div>`;
   for (const t of TASKS) {
-    if (t.id === "bonus_geholfen") continue; // wird weiter unten, hinter den Extra-Bonusaufgaben, gerendert
     html += renderTaskCardHtml(t, rec);
   }
 
   html += `<div class="section-title">Bonus-Aufgaben (Extra)</div>`;
   for (const b of BONUS_TASKS) {
     const val = rec.bonus[b.id] || 0;
+    const photo = rec.photos[b.id];
     let stars = "";
     for (let i = 1; i <= b.maxStars; i++) {
       stars += `<span class="bonus-star ${i <= val ? "active" : ""}" data-role="bonus-star" data-task="${b.id}" data-value="${i}">⭐</span>`;
     }
     html += `
       <div class="bonus-card">
-        <div class="bonus-label">${b.label} <span style="opacity:.6">(bis zu ${b.maxStars} Extra-Sterne)</span></div>
-        <div class="bonus-stars">${stars}</div>
+        <div class="bonus-body">
+          <div class="bonus-label">${b.label} <span style="opacity:.6">(bis zu ${b.maxStars} Extra-${b.maxStars === 1 ? "Stern" : "Sterne"})</span></div>
+          <div class="bonus-stars">${stars}</div>
+        </div>
+        ${photo
+          ? `<img class="task-photo-thumb" src="${photo}" data-role="photo-view" data-task="${b.id}" />`
+          : `<button class="task-photo-btn" data-role="photo-add" data-task="${b.id}">📷</button>`}
       </div>`;
   }
-
-  html += renderTaskCardHtml(TASKS.find((t) => t.id === "bonus_geholfen"), rec);
 
   container.innerHTML = html;
   wireTaskEvents(container);
@@ -283,14 +288,20 @@ async function renderTotalBar(todayStars, { shareable = true } = {}) {
   if (todayStars !== null) {
     html += `<div id="total-text">Heute: <strong>${todayStars} ⭐ = ${starsToCHF(todayStars)} CHF</strong> &nbsp;·&nbsp; Gesamt: <strong>${grand} ⭐ = ${starsToCHF(grand)} CHF</strong></div>`;
     if (shareable) {
-      html += `<button class="share-button" id="share-btn">Tag abschliessen & teilen</button>`;
+      const mandatoryTasks = TASKS.filter((t) => t.mandatory);
+      const mandatoryDone = mandatoryTasks.every((t) => currentRecord.checked[t.id]);
+      if (!mandatoryDone) {
+        const missing = mandatoryTasks.filter((t) => !currentRecord.checked[t.id]).map((t) => t.label).join(", ");
+        html += `<div class="share-blocked-hint">Erst „${missing}“ erledigen, um den Tag abzuschliessen.</div>`;
+      }
+      html += `<button class="share-button" id="share-btn" ${mandatoryDone ? "" : "disabled"}>Tag abschliessen & teilen</button>`;
     }
   } else {
     html = `<div id="total-text">Gesamt bisher: <strong>${grand} ⭐ = ${starsToCHF(grand)} CHF</strong></div>`;
   }
   bar.innerHTML = html;
   const btn = document.getElementById("share-btn");
-  if (btn) btn.addEventListener("click", shareDay);
+  if (btn && !btn.disabled) btn.addEventListener("click", shareDay);
 }
 
 async function shareDay() {
