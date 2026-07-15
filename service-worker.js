@@ -1,4 +1,4 @@
-const CACHE = "sternen-challenge-v1";
+const CACHE = "sternen-challenge-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,6 +8,9 @@ const ASSETS = [
   "./app.js",
   "./manifest.json",
   "./assets/icon.svg",
+  "./assets/title-elias.jpg",
+  "./assets/title-linda.jpg",
+  "./assets/wait-screen.jpg",
 ];
 
 self.addEventListener("install", (event) => {

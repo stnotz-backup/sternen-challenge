@@ -155,6 +155,16 @@ async function render() {
     return;
   }
 
+  if (currentRecord.submitted) {
+    dayView.innerHTML = `
+      <div class="wait-screen">
+        <img src="${WAIT_IMAGE}" alt="Bis morgen" />
+        <div class="wait-screen-text">Super gemacht, ${KID.name}! Der heutige Bericht ist unterwegs zu Mama.<br>Bis morgen! 🌙</div>
+      </div>`;
+    renderTotalBar(computeDayTotalStars(currentRecord), { shareable: false });
+    return;
+  }
+
   renderTaskDay(dayView);
   renderTotalBar(computeDayTotalStars(currentRecord));
 }
@@ -259,13 +269,15 @@ function wireTaskEvents(container) {
   });
 }
 
-async function renderTotalBar(todayStars) {
+async function renderTotalBar(todayStars, { shareable = true } = {}) {
   const bar = document.getElementById("total-bar");
   const grand = await computeGrandTotal();
   let html = "";
   if (todayStars !== null) {
     html += `<div id="total-text">Heute: <strong>${todayStars} ⭐ = ${starsToCHF(todayStars)} CHF</strong> &nbsp;·&nbsp; Gesamt: <strong>${grand} ⭐ = ${starsToCHF(grand)} CHF</strong></div>`;
-    html += `<button class="share-button" id="share-btn">Tag abschliessen & teilen</button>`;
+    if (shareable) {
+      html += `<button class="share-button" id="share-btn">Tag abschliessen & teilen</button>`;
+    }
   } else {
     html = `<div id="total-text">Gesamt bisher: <strong>${grand} ⭐ = ${starsToCHF(grand)} CHF</strong></div>`;
   }
@@ -276,6 +288,9 @@ async function renderTotalBar(todayStars) {
 
 async function shareDay() {
   const rec = currentRecord;
+  rec.submitted = true;
+  await putDay(rec);
+
   const todayTotal = computeDayTotalStars(rec);
   const grand = await computeGrandTotal();
 
@@ -312,13 +327,14 @@ async function shareDay() {
   if (navigator.share) {
     try {
       await navigator.share(shareData);
-      return;
     } catch (e) {
-      // Nutzer hat Teilen abgebrochen — kein Fehler, kein Fallback nötig
-      return;
+      // Nutzer hat Teilen abgebrochen — Tag gilt trotzdem als abgeschlossen
     }
+  } else {
+    showTextOverlay(text);
   }
-  showTextOverlay(text);
+
+  render(); // wechselt jetzt auf den Wartebild-Screen (rec.submitted === true)
 }
 
 function showTextOverlay(text) {
@@ -335,8 +351,21 @@ function showTextOverlay(text) {
   document.body.appendChild(overlay);
 }
 
+function showTitleScreen(onDismiss) {
+  const overlay = document.createElement("div");
+  overlay.id = "title-screen";
+  overlay.innerHTML = `
+    <img src="${KID.titleImage}" alt="${KID.name}" />
+    <div class="title-tap-hint">Antippen zum Starten</div>`;
+  overlay.addEventListener("click", () => {
+    overlay.remove();
+    onDismiss();
+  });
+  document.body.appendChild(overlay);
+}
+
 window.addEventListener("DOMContentLoaded", () => {
-  render();
+  showTitleScreen(() => render());
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js").catch(() => {});
   }

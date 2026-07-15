@@ -9,15 +9,33 @@ const CHALLENGE = {
   starValueCHF: 0.30,
 };
 
-// Aktives Kind für diesen Build. Für den Test nur Elias.
-const KID = {
-  id: "elias",
-  name: "Elias",
-  emoji: "🚵",
-  colorPrimary: "#1a6f8f",
-  colorAccent: "#0f4c5c",
-  colorBg: "#eaf6fa",
+// Beide Kind-Themes (Linda vorerst nur vorbereitet, aktiv ist nur Elias fuer den Test).
+const KIDS = {
+  elias: {
+    id: "elias",
+    name: "Elias",
+    emoji: "🚵",
+    colorPrimary: "#1a6f8f",
+    colorAccent: "#0f4c5c",
+    colorBg: "#eaf6fa",
+    titleImage: "assets/title-elias.jpg",
+  },
+  linda: {
+    id: "linda",
+    name: "Linda",
+    emoji: "🐱",
+    colorPrimary: "#178a9c",
+    colorAccent: "#5a3b82",
+    colorBg: "#eafaf6",
+    titleImage: "assets/title-linda.jpg",
+  },
 };
+
+// Aktives Kind für diesen Build. Für den Test nur Elias.
+const KID = KIDS.elias;
+
+// Bildschirm, der nach dem Absenden des Tagesberichts bis zum naechsten Tag gezeigt wird.
+const WAIT_IMAGE = "assets/wait-screen.jpg";
 
 // Hauptaufgaben — Reihenfolge wie im Original-PDF. Max 9 Sterne/Tag.
 const TASKS = [

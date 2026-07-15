@@ -26,7 +26,7 @@ async function getDay(date) {
     const req = tx.objectStore(STORE).get(date);
     req.onsuccess = () => {
       resolve(
-        req.result || { date, checked: {}, bonus: {}, photos: {} }
+        req.result || { date, checked: {}, bonus: {}, photos: {}, submitted: false }
       );
     };
     req.onerror = () => reject(req.error);
