@@ -1,0 +1,13 @@
+{
+  "name": "Sternen-Challenge",
+  "short_name": "Sterne",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eaf6fa",
+  "theme_color": "#1a6f8f",
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
