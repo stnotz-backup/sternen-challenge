@@ -267,6 +267,12 @@ body {
   padding: 12px;
 }
 
+.install-instructions {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
 .share-close-btn {
   border: none;
   border-radius: 10px;

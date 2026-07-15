@@ -1,4 +1,4 @@
-const CACHE = "sternen-challenge-v2";
+const CACHE = "sternen-challenge-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,6 +8,8 @@ const ASSETS = [
   "./app.js",
   "./manifest.json",
   "./assets/icon.svg",
+  "./assets/icon-192.png",
+  "./assets/icon-512.png",
   "./assets/title-elias.jpg",
   "./assets/title-linda.jpg",
   "./assets/wait-screen.jpg",

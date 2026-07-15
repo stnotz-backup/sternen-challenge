@@ -364,8 +364,32 @@ function showTitleScreen(onDismiss) {
   document.body.appendChild(overlay);
 }
 
+function maybeShowInstallHint() {
+  const alreadyInstalled = window.matchMedia("(display-mode: standalone)").matches;
+  const alreadyDismissed = localStorage.getItem("scInstallHintDismissed");
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  if (alreadyInstalled || alreadyDismissed || !isAndroid) return;
+
+  const overlay = document.createElement("div");
+  overlay.className = "share-overlay";
+  overlay.innerHTML = `
+    <div class="share-card">
+      <div class="share-card-title">Auf dem Handy einrichten</div>
+      <p class="install-instructions">Tippe oben rechts im Browser auf <strong>⋮</strong> und dann auf <strong>"Zum Startbildschirm hinzufügen"</strong> — dann hast du das Stern-Symbol direkt auf deinem Handy und kannst die App auch offline öffnen.</p>
+      <button class="share-close-btn" data-role="install-hint-close">Verstanden</button>
+    </div>`;
+  overlay.querySelector('[data-role="install-hint-close"]').addEventListener("click", () => {
+    localStorage.setItem("scInstallHintDismissed", "1");
+    overlay.remove();
+  });
+  document.body.appendChild(overlay);
+}
+
 window.addEventListener("DOMContentLoaded", () => {
-  showTitleScreen(() => render());
+  showTitleScreen(() => {
+    render();
+    maybeShowInstallHint();
+  });
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js").catch(() => {});
   }
