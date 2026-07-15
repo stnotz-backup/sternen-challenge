@@ -363,3 +363,106 @@ body {
   color: var(--color-accent);
   line-height: 1.5;
 }
+
+/* Debug-Werkzeuge — nur im Test-Repo sichtbar (TEST_MODE) */
+.debug-panel {
+  margin-top: 24px;
+  border: 2px dashed #aaa;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #f4f4f4;
+}
+
+.debug-panel-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.debug-panel-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.debug-btn {
+  border: 1px solid #999;
+  background: white;
+  color: #333;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.debug-btn:active {
+  background: #eee;
+}
+
+.debug-btn-danger {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-actions .share-close-btn {
+  flex: 1;
+}
+
+.confirm-cancel-btn {
+  background: #999 !important;
+}
+
+#kid-picker-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  z-index: 100;
+}
+
+.kid-picker-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.kid-picker-options {
+  display: flex;
+  gap: 20px;
+}
+
+.kid-picker-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 28px;
+  border-radius: 16px;
+  border: none;
+  background: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 16px;
+  color: #1a1a1a;
+}
+
+.kid-picker-option:active {
+  background: #f0f0f0;
+}
+
+.kid-picker-emoji {
+  font-size: 40px;
+}

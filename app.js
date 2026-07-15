@@ -1,7 +1,15 @@
 // Sternen-Challenge — App-Logik
 
+let KID = KIDS[ACTIVE_KID_ID];
+
+// Nur im Test-Repo relevant: simuliertes "Heute" (gemeinsam fuer beide Kinder),
+// verschoben ueber den "Naechster Tag"-Debug-Button. Ueberlebt einen Browser-Neustart.
 function todayISO() {
   const d = new Date();
+  if (TEST_MODE) {
+    const offsetDays = parseInt(localStorage.getItem("scDateOffsetDays") || "0", 10);
+    d.setDate(d.getDate() + offsetDays);
+  }
   return isoFromDate(d);
 }
 
@@ -78,7 +86,7 @@ function starsToCHF(stars) {
 }
 
 async function computeGrandTotal() {
-  const days = await getAllDays();
+  const days = await getAllDaysForKid(KID.id);
   let stars = 0;
   for (const rec of days) {
     stars += computeDayTotalStars(rec);
@@ -147,11 +155,12 @@ async function render() {
     dayCounter.textContent = "Testversion";
   }
 
-  currentRecord = await getDay(currentIso);
+  currentRecord = await getDay(KID.id, currentIso);
 
   if (isWeekend(currentIso)) {
-    dayView.innerHTML = `<div class="gate-screen"><span class="gate-emoji">🛝</span>Heute ist Pause-Tag!<br>Schönes Wochenende, ${KID.name}! 🎉</div>`;
+    dayView.innerHTML = `<div class="gate-screen"><span class="gate-emoji">🛝</span>Heute ist Pause-Tag!<br>Schönes Wochenende, ${KID.name}! 🎉</div>` + renderDebugPanelHtml();
     renderTotalBar(0);
+    wireDebugPanelEvents(dayView);
     return;
   }
 
@@ -160,8 +169,9 @@ async function render() {
       <div class="wait-screen">
         <img src="${WAIT_IMAGE}" alt="Bis morgen" />
         <div class="wait-screen-text">Super gemacht, ${KID.name}! Der heutige Bericht ist unterwegs zu Mama.<br>Bis morgen! 🌙</div>
-      </div>`;
+      </div>` + renderDebugPanelHtml();
     renderTotalBar(computeDayTotalStars(currentRecord), { shareable: false });
+    wireDebugPanelEvents(dayView);
     return;
   }
 
@@ -222,8 +232,11 @@ function renderTaskDay(container) {
       </div>`;
   }
 
+  html += renderDebugPanelHtml();
+
   container.innerHTML = html;
   wireTaskEvents(container);
+  wireDebugPanelEvents(container);
 }
 
 function wireTaskEvents(container) {
@@ -369,6 +382,116 @@ function showTextOverlay(text) {
   document.body.appendChild(overlay);
 }
 
+function showConfirmOverlay(title, message, onConfirm) {
+  const overlay = document.createElement("div");
+  overlay.className = "share-overlay";
+  overlay.innerHTML = `
+    <div class="share-card">
+      <div class="share-card-title">${title}</div>
+      <p class="install-instructions">${message}</p>
+      <div class="confirm-actions">
+        <button class="share-close-btn confirm-cancel-btn" data-role="confirm-cancel">Abbrechen</button>
+        <button class="share-close-btn" data-role="confirm-ok">Ja, fortfahren</button>
+      </div>
+    </div>`;
+  overlay.querySelector('[data-role="confirm-cancel"]').addEventListener("click", () => overlay.remove());
+  overlay.querySelector('[data-role="confirm-ok"]').addEventListener("click", async () => {
+    overlay.remove();
+    await onConfirm();
+  });
+  document.body.appendChild(overlay);
+}
+
+// Debug-Werkzeuge (Reset / Tag zuruecksetzen / Naechster Tag / Kind wechseln) —
+// existieren nur im Test-Repo (TEST_MODE=true), gesteuert allein ueber diesen Flag.
+// In den Produktiv-Repos (Elias/Linda, TEST_MODE=false) rendern diese Funktionen nichts.
+function renderDebugPanelHtml() {
+  if (!TEST_MODE) return "";
+  return `
+    <div class="debug-panel">
+      <div class="debug-panel-title">🧪 Nur für den Test (${KID.name})</div>
+      <div class="debug-panel-buttons">
+        <button class="debug-btn" data-role="debug-reset-day">Tag zurücksetzen</button>
+        <button class="debug-btn" data-role="debug-next-day">Nächster Tag ▶</button>
+        <button class="debug-btn debug-btn-danger" data-role="debug-reset-all">Alles zurücksetzen</button>
+        <button class="debug-btn" data-role="debug-switch-kid">Kind wechseln</button>
+      </div>
+    </div>`;
+}
+
+function wireDebugPanelEvents(container) {
+  if (!TEST_MODE) return;
+
+  const resetDayBtn = container.querySelector('[data-role="debug-reset-day"]');
+  if (resetDayBtn) {
+    resetDayBtn.addEventListener("click", async () => {
+      currentRecord.submitted = false;
+      await putDay(currentRecord);
+      render();
+    });
+  }
+
+  const nextDayBtn = container.querySelector('[data-role="debug-next-day"]');
+  if (nextDayBtn) {
+    nextDayBtn.addEventListener("click", () => {
+      const offset = parseInt(localStorage.getItem("scDateOffsetDays") || "0", 10);
+      localStorage.setItem("scDateOffsetDays", String(offset + 1));
+      render();
+    });
+  }
+
+  const resetAllBtn = container.querySelector('[data-role="debug-reset-all"]');
+  if (resetAllBtn) {
+    resetAllBtn.addEventListener("click", () => {
+      showConfirmOverlay(
+        "Wirklich alles zurücksetzen?",
+        `Alle bisher eingegebenen Tage von ${KID.name} werden gelöscht. Das lässt sich nicht rückgängig machen.`,
+        async () => {
+          await deleteAllDaysForKid(KID.id);
+          render();
+        }
+      );
+    });
+  }
+
+  const switchKidBtn = container.querySelector('[data-role="debug-switch-kid"]');
+  if (switchKidBtn) {
+    switchKidBtn.addEventListener("click", () => {
+      localStorage.removeItem("scSelectedKid");
+      showKidPickerScreen(() => showTitleScreen(() => render()));
+    });
+  }
+}
+
+function showKidPickerScreen(onChosen) {
+  const overlay = document.createElement("div");
+  overlay.id = "kid-picker-screen";
+  const kidIds = Object.keys(KIDS);
+  overlay.innerHTML = `
+    <div class="kid-picker-title">Wer bist du?</div>
+    <div class="kid-picker-options">
+      ${kidIds
+        .map(
+          (id) => `
+        <button class="kid-picker-option" data-kid="${id}">
+          <span class="kid-picker-emoji">${KIDS[id].emoji}</span>
+          <span class="kid-picker-name">${KIDS[id].name}</span>
+        </button>`
+        )
+        .join("")}
+    </div>`;
+  overlay.querySelectorAll(".kid-picker-option").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.kid;
+      KID = KIDS[id];
+      localStorage.setItem("scSelectedKid", id);
+      overlay.remove();
+      onChosen();
+    });
+  });
+  document.body.appendChild(overlay);
+}
+
 function showTitleScreen(onDismiss) {
   const overlay = document.createElement("div");
   overlay.id = "title-screen";
@@ -404,10 +527,25 @@ function maybeShowInstallHint() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  showTitleScreen(() => {
-    render();
-    maybeShowInstallHint();
-  });
+  const start = () => {
+    showTitleScreen(() => {
+      render();
+      maybeShowInstallHint();
+    });
+  };
+
+  if (TEST_MODE) {
+    const storedKidId = localStorage.getItem("scSelectedKid");
+    if (storedKidId && KIDS[storedKidId]) {
+      KID = KIDS[storedKidId];
+      start();
+    } else {
+      showKidPickerScreen(start);
+    }
+  } else {
+    start();
+  }
+
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js").catch(() => {});
   }

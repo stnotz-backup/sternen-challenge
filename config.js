@@ -31,8 +31,10 @@ const KIDS = {
   },
 };
 
-// Aktives Kind für diesen Build. Für den Test nur Elias.
-const KID = KIDS.elias;
+// Aktives Kind für diesen Build. In Produktiv-Repos (TEST_MODE=false) fest verdrahtet
+// durch das Deploy-Skript. Im Test-Repo (TEST_MODE=true) nur der Startwert, bevor die
+// Kind-Auswahl greift (siehe app.js).
+const ACTIVE_KID_ID = "elias";
 
 // Bildschirm, der nach dem Absenden des Tagesberichts bis zum naechsten Tag gezeigt wird.
 const WAIT_IMAGE = "assets/wait-screen.jpg";
